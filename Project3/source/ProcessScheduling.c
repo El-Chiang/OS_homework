@@ -15,6 +15,7 @@
 #define MAX_TIME 100
 #define TRUE 1
 #define FALSE 0
+#define BUGNUM 2147483647
 
 typedef int bool;
 
@@ -109,7 +110,7 @@ void FCFSQueInit()
  */
 int doFCFS()
 {
-    FCFSQueInit();  // initial
+    FCFSQueInit(); // initial
     int totalTime = 0;
     for (int i = 0; i < THREAD_NUMBER; i++)
     {
@@ -134,12 +135,61 @@ int doFCFS()
 /**
  * SJF Scheduling Sort
  */
-int *SJFSort(int *sorte) {}
+int *SJFSort(int *sorted)
+{
+    int threadQueue[THREAD_NUMBER];
+    for (int i = 0; i < THREAD_NUMBER; i++)
+    {
+        threadQueue[i] = PCBQueue[i].intervalTime;
+    }
+    for (int i = 0; i < THREAD_NUMBER; i++)
+    {
+        int min = 0;
+        for (int j = 0; j < THREAD_NUMBER; j++)
+        {
+            if (threadQueue[min] > threadQueue[j])
+            {
+                min = j;
+            }
+        }
+        threadQueue[min] = BUGNUM;
+        sorted[i] = min;
+    }
+    return sorted;
+}
+
+void SJFQueInit(int* threadQueue)
+{
+    int currTime = 0;
+    for (int i = 0; i < THREAD_NUMBER; i++)
+    {
+        for (int j = currTime; j < currTime + PCBQueue[threadQueue[i]].intervalTime; j++)
+            PCBQueue[threadQueue[i]].operationFlag[j] = TRUE;
+        currTime += PCBQueue[threadQueue[i]].intervalTime;
+    }
+}
 
 /**
  * Execute SJF
  */
-int doSJF() {}
+int doSJF()
+{
+    int ret[THREAD_NUMBER] = {0};
+    int threadQueue[THREAD_NUMBER];
+    SJFSort(threadQueue);
+    SJFQueInit(threadQueue);
+    for (int i = 0; i < THREAD_NUMBER; i++)
+    {
+        ret[threadQueue[i]] = pthread_create(&PCBQueue[threadQueue[i]].id, NULL, subThread, &threadQueue[i]);
+        if (ret[threadQueue[i]])
+        {
+            printf("create thread %d ERROR\n", threadQueue[i]);
+            return 1;
+        }
+        pthread_join(PCBQueue[threadQueue[i]].id, NULL);
+    }
+    return 0;
+}
 
 /**
  * RR Scheduling
@@ -163,9 +213,6 @@ void printHelp()
     return;
 }
 
-/**
- * SJF Scheduling
- */
 
 int main(int argc, char *argv[])
 {
@@ -182,7 +229,8 @@ int main(int argc, char *argv[])
         }
     }
 
-    printf("FCFS\n");
-    doFCFS();
+    printf("SJF\n");
+    // doFCFS();
+    doSJF();
     return 0;
 }
