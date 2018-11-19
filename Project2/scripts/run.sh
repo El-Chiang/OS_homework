@@ -1,17 +1,33 @@
 #!/bin/bash
 #=====================================================
-# Compile communication.c
+# Compile pipe.c
 #=====================================================
-step="Compile communication.c"
+step="Compile pipe.c"
 echo "----------------------------------------------"
 echo "$step"
-gcc ./source/communication.c -o ./build/communication.out
+gcc ./source/pipe.c -o ./build/pipe
 
 #=====================================================
-# Execute communication
+# Execute pipe
 #=====================================================
-step="Execute"
+step="Execute pipe"
 echo "----------------------------------------------"
 echo "$step"
 echo "----------------------------------------------"
-./build/communication.out
+./build/pipe
+#=====================================================
+# Compile msg.c
+#=====================================================
+step="Compile msg.c"
+echo "----------------------------------------------"
+echo "$step"
+gcc ./source/msg.c -o ./build/msg
+
+#=====================================================
+# Execute msg
+#=====================================================
+step="Execute msg"
+echo "----------------------------------------------"
+echo "$step"
+echo "----------------------------------------------"
+./build/msg
