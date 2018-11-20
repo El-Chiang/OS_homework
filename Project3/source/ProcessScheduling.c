@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define THREAD_NUMBER 20
 #define TIME_SLICE 100000
@@ -240,7 +241,7 @@ int doRR()
 /** print out HELP DOC */
 void printHelp()
 {
-    printf("\n-args...：\n\n"
+    printf("\n-args:\n\n"
            "    --FCFS\tFirst Come First Served Scheduling,\n"
            "    --SJF \tShortest Job First Scheduling,\n"
            "    --RR  \tRound Robin Scheduling,\n"
@@ -263,7 +264,29 @@ enum SchedType
 
 int main(int argc, char *argv[])
 {
-    printHelp();
+    char *strCmdArg;
+    if (argc <= 1)
+        strCmdArg = "help";
+    else
+        strCmdArg = argv[1];
+    enum SchedType currSched;
+
+    // judge if argv is legal
+    if (!strcmp(strCmdArg, "--fcfs") || !strcmp(strCmdArg, "--FCFS"))
+        currSched = SCHED_TYPE_FCFS;
+    else if (!strcmp(strCmdArg, "--sjf") || !strcmp(strCmdArg, "--SJF"))
+        currSched = SCHED_TYPE_SJF;
+    else if (!strcmp(strCmdArg, "--rr") || !strcmp(strCmdArg, "--RR"))
+        currSched = SCHED_TYPE_RR;
+    else if (!strcmp(strCmdArg, "--ps") || !strcmp(strCmdArg, "--PS"))
+        currSched = SCHED_TYPE_PS;
+    else if (!strcmp(strCmdArg, "--mlqs") || !strcmp(strCmdArg, "--MLQS"))
+        currSched = SCHED_TYPE_MLQS;
+    else
+        currSched = SCHED_TYPE_HELP;
+
+    // printHelp();
+
     // initial operationalFlag of all PCB, set intervalTime to random 1~5
     srand((unsigned)time(NULL));
     for (int i = 0; i < THREAD_NUMBER; i++)
@@ -271,14 +294,38 @@ int main(int argc, char *argv[])
         PCBQueue[i].intervalTime = rand() % 5 + 1;
         PCBQueue[i].operationFlag = (int *)malloc(MAX_TIME * sizeof(int));
         for (int j = 0; j < MAX_TIME; j++)
-        {
             PCBQueue[i].operationFlag[j] = 0;
-        }
     }
 
-    printf("RR\n");
-    // doFCFS();
-    // doSJF();
-    doRR();
+    // execute scheduling according currSched
+    switch (currSched)
+    {
+    case SCHED_TYPE_HELP:
+        printHelp();
+        break;
+    case SCHED_TYPE_FCFS:
+        printf("FCFS\n");
+        doFCFS();
+        break;
+    case SCHED_TYPE_SJF:
+        printf("SJF\n");
+        doSJF();
+        break;
+    case SCHED_TYPE_RR:
+        printf("RR\n");
+        doRR();
+        break;
+    case SCHED_TYPE_PS:
+        printf("PS\n");
+        printf("developing...\n"); // TODO: doPS()
+        break;
+    case SCHED_TYPE_MLQS:
+        printf("MLQS\n");
+        printf("developing...\n"); // TODO: doMLQS()
+        break;
+    default:
+        printHelp();
+    }
+
     return 0;
 }
