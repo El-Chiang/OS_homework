@@ -20,10 +20,9 @@
 typedef int bool;
 
 static int timer = 0;
+static int tt = 0;
 
-/**
- * Define Process Control Block struct
- */
+/** Define Process Control Block struct */
 struct PCB
 {
     pthread_t id;        // thread ID
@@ -33,9 +32,7 @@ struct PCB
     bool *operationFlag; // run -> TRUE, block -> FALSE
 } PCBQueue[THREAD_NUMBER];
 
-/**
- * FCFS & SJF sub-thread control
- */
+/** FCFS & SJF sub-thread control */
 void *subThread(void *threadCount)
 {
     int count = *(int *)threadCount;
@@ -63,9 +60,7 @@ void *subThread(void *threadCount)
     pthread_exit(0);
 }
 
-/**
- * RR sub-thread control
- */
+/** RR sub-thread control */
 void *RRSubThread(void *threadCount)
 {
     int count = *(int *)threadCount;
@@ -88,8 +83,7 @@ void *RRSubThread(void *threadCount)
     pthread_exit(0);
 }
 
-/**
- * initial FCFS thread queue:
+/** initial FCFS thread queue
  * Create 20 child threads and set every flag to TRUE
  */
 void FCFSQueInit()
@@ -105,9 +99,7 @@ void FCFSQueInit()
     }
 }
 
-/**
- * Execute FCFS
- */
+/** Execute FCFS */
 int doFCFS()
 {
     FCFSQueInit(); // initial
@@ -132,9 +124,7 @@ int doFCFS()
     return 0;
 }
 
-/**
- * SJF Scheduling Sort
- */
+/** SJF Scheduling Sort */
 int *SJFSort(int *sorted)
 {
     int threadQueue[THREAD_NUMBER];
@@ -158,7 +148,10 @@ int *SJFSort(int *sorted)
     return sorted;
 }
 
-void SJFQueInit(int* threadQueue)
+/** Initial SJF thread queue
+ * set all flag to TRUE
+ */
+void SJFQueInit(int *threadQueue)
 {
     int currTime = 0;
     for (int i = 0; i < THREAD_NUMBER; i++)
@@ -169,9 +162,7 @@ void SJFQueInit(int* threadQueue)
     }
 }
 
-/**
- * Execute SJF
- */
+/** Execute SJF */
 int doSJF()
 {
     int ret[THREAD_NUMBER] = {0};
@@ -191,16 +182,62 @@ int doSJF()
     return 0;
 }
 
-/**
- * RR Scheduling
- */
-void RRQueInit() {}
+/** Initial RR Scheduling thread queue */
+void RRQueInit()
+{
+    int threadIntervalTime[THREAD_NUMBER];
+    int totalTime = 0;
+    int currTime = 0;
+    for (int i = 0; i < THREAD_NUMBER; i++)
+    {
+        threadIntervalTime[i] = PCBQueue[i].intervalTime;
+        totalTime += PCBQueue[i].intervalTime;
+    }
+    printf("%d\n", totalTime);
+    for (int i = 0, j = 0; i < totalTime; i++, j++)
+    {
+        if (j >= THREAD_NUMBER)
+            j = 0;
+        if (threadIntervalTime[j] <= 0)
+        {
+            i--;
+            continue;
+        }
+        else
+        {
+            PCBQueue[j].operationFlag[i] = TRUE;
+            threadIntervalTime[j]--;
+        }
+    }
+}
 
-/**
- * Execute RR Scheduling
- */
-int doRR() {}
+/** Execute RR Scheduling */
+int doRR()
+{
+    RRQueInit();
+    int ret[THREAD_NUMBER] = {0};
+    int totalTime = 0;
+    for (int i = 0; i < THREAD_NUMBER; i++)
+        totalTime += PCBQueue[i].intervalTime;
+    tt = totalTime;
+    for (int i = 0; i < THREAD_NUMBER; i++)
+    {
+        ret[i] = pthread_create(&PCBQueue[i].id, NULL, RRSubThread, &i);
+        if (ret[i])
+        {
+            printf("create thread %d ERROR\n", i);
+            return 1;
+        }
+    }
+    for (int i = 0; i < THREAD_NUMBER; i++)
+    {
+        timer++;
+        usleep(TIME_SLICE);
+    }
+    return 0;
+}
 
+/** print out HELP DOC */
 void printHelp()
 {
     printf("\n-args...：\n\n"
@@ -213,6 +250,16 @@ void printHelp()
     return;
 }
 
+/** Scheduling type */
+enum SchedType
+{
+    SCHED_TYPE_HELP = 0x01 << 0,
+    SCHED_TYPE_FCFS = 0x01 << 1,
+    SCHED_TYPE_SJF = 0x01 << 2,
+    SCHED_TYPE_RR = 0x01 << 3,
+    SCHED_TYPE_PS = 0x01 << 4,
+    SCHED_TYPE_MLQS = 0x01 << 5,
+};
 
 int main(int argc, char *argv[])
 {
@@ -229,8 +276,9 @@ int main(int argc, char *argv[])
         }
     }
 
-    printf("SJF\n");
+    printf("RR\n");
     // doFCFS();
-    doSJF();
+    // doSJF();
+    doRR();
     return 0;
 }
